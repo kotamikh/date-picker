@@ -1,6 +1,6 @@
 <template>
   <div class="calendar" v-if="props.show">
-    <div class="date">
+    <div class="year-month">
       <select class="years" v-model="selected">
         <option v-for="year in years"
                 :key="year"
@@ -10,20 +10,31 @@
       <p class="date">
         <button class="arrow-left"
                 @click="previousMonth"
-        >&lt</button>
-        {{ currentMonth + ', ' + day }}
+        >&lt
+        </button>
+        {{ monthName.name }}
         <button class="arrow-right"
                 @click="nextMonth"
-        >&gt</button>
+        >&gt
+        </button>
       </p>
     </div>
-    <div></div>
+    <table class="picker">
+      <tr class="daysColumn"
+          v-for="day in daysOfWeek"
+         :key="day"
+      >{{ day.name }}
+      <td>{{ lastDayName }}</td>
+      <td>{{ lastDayName }}</td>
+      </tr>
+    </table>
     <button @click="emit('closeCalendar')">OK</button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useDataStore } from "../store/DataStore";
 
 const props = defineProps({
   show: Boolean,
@@ -36,12 +47,15 @@ const currentDate = new Date()
 const currentYear = currentDate.getFullYear()
 const selected = ref(currentYear)
 
-const currentMonth = currentDate.toLocaleString('default', { month: 'long' })
-const currentDay = currentDate.getDate()
-const month = ref(currentMonth)
-const day = ref(currentDay)
+const month = ref(currentDate.getMonth() + 1)
+const monthName = computed(() => useDataStore().months.find(m => m.id === month.value))
 
-const years = computed(() => yearSelect(5, 5))
+const lastDayName = new Date(currentYear, month.value, 0).getDay()
+
+
+const daysOfWeek = useDataStore().week
+
+const day = ref(currentDate.getDate())
 
 const yearSelect = (countPast: number, countFuture: number) => {
   const yearsArray = [currentYear]
@@ -62,12 +76,14 @@ const yearSelect = (countPast: number, countFuture: number) => {
   return yearsArray
 }
 
-const previousMonth = () => {
-  day.value = 1
+const years = yearSelect(5, 5)
+
+const previousMonth = function () {
+  month.value === 1 ? month.value = 12 : month.value--
 }
 
-const nextMonth = () => {
-  day.value = 1
+const nextMonth = function () {
+  month.value === 12 ? month.value = 1 : month.value++
 }
 
 </script>
@@ -76,20 +92,21 @@ const nextMonth = () => {
 .calendar
   width: 100%
 
-  .date
+  .year-month
     gap: 10px
+    height: 25px
     display: flex
     align-items: center
     justify-content: center
 
     .years
-      width: 30%
-      height: fit-content
+      width: 35%
+      height: 100%
 
     p.date
       display: flex
       justify-content: space-between
-      width: 70%
+      width: 65%
       margin: 0
       padding: 0
       background-color: white
@@ -98,4 +115,36 @@ const nextMonth = () => {
         border: none
         padding: 0 20px
         background-color: transparent
+
+  .picker
+    color: white
+    display: grid
+    margin: 10px 0
+    text-align: center
+    border: 2px solid rgba(58, 62, 93, 0.7)
+    border-collapse: collapse
+    grid-template-columns: repeat(7, 1fr)
+
+    .daysColumn
+      margin: 0
+      display: flex
+      flex-direction: column
+      border-right: 2px solid rgba(58, 62, 93, 0.7)
+
+      &:last-child
+        border-right: 0
+
+      td
+        color: black
+        background-color: white
+        border-top: 2px solid rgba(58, 62, 93, 0.7)
+        padding: 0
+
+        &:first-child
+          border-top: 0
+
+        &:hover
+          cursor: pointer
+          background-color: lightblue
+
 </style>

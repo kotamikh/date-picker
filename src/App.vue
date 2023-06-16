@@ -20,11 +20,17 @@ import { ref } from "vue";
 import Calendar from "./components/Calendar.vue";
 
 const currentDate = new Date()
+
+const currentDay = currentDate.getDate() < 10 ? '0' + currentDate.getDate() : currentDate.getDate()
+const currentMonth = (currentDate.getMonth() + 1 < 10) ? '0' + (currentDate.getMonth() + 1) : currentDate.getMonth() + 1
+const currentYear = currentDate.getFullYear()
+
 const showModal = ref(false)
 const inputValue = ref<string>('Click to pick the date')
 
 const showCalendar = () => {
   showModal.value = true
+  inputValue.value = currentDay + ' / ' + currentMonth + ' / ' + currentYear
 }
 
 </script>
@@ -56,6 +62,7 @@ const showCalendar = () => {
     input
       width: 100%
       height: 35px
+      padding: 0 20px
       margin-bottom: 10px
 
 </style>
