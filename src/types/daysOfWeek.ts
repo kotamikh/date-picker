@@ -11,5 +11,5 @@ export enum WeekDayName {
 export interface IDayOfWeek {
     name: string,
     id: number,
-    days: Array<number>
+    days: Array<number | '-'>
 }

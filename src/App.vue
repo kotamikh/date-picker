@@ -10,6 +10,8 @@
       />
       <calendar v-model:show="showModal"
                 @close-calendar="showModal = false"
+                :input = "inputValue"
+                @new-date(date)="changeDate"
       />
     </div>
   </div>
@@ -31,6 +33,11 @@ const inputValue = ref<string>('Click to pick the date')
 const showCalendar = () => {
   showModal.value = true
   inputValue.value = currentDay + ' / ' + currentMonth + ' / ' + currentYear
+}
+
+const changeDate = (date: string) => {
+  console.log(date)
+  inputValue.value = date
 }
 
 </script>

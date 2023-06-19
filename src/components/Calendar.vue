@@ -1,7 +1,9 @@
 <template>
   <div class="calendar" v-if="props.show">
     <div class="year-month">
-      <select class="years" v-model="selected">
+      <select class="years" v-model="selected"
+              @change="orderedMonth()"
+      >
         <option v-for="year in years"
                 :key="year"
         >{{ year }}
@@ -26,6 +28,8 @@
       >{{ day.name }}
         <td v-for="d in day.days"
             :key="d"
+            :class="{ chosen : isChosen }"
+            @click="emit('newDate', `${d} / ${monthName.id} / ${currentYear}`)"
         >{{ d }}
         </td>
       </tr>
@@ -35,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { useDataStore } from "../store/DataStore";
 
 const props = defineProps({
@@ -43,11 +47,12 @@ const props = defineProps({
   currentDate: String
 })
 
-const emit = defineEmits(['closeCalendar'])
+const emit = defineEmits(['closeCalendar', 'newDate'])
 
 const currentDate = new Date()
 const currentYear = ref(currentDate.getFullYear())
 const selected = currentYear
+const isChosen = ref(false)
 
 const month = ref(currentDate.getMonth() + 1)
 const monthName = computed(() => useDataStore().months.find(m => m.id === month.value))
@@ -60,17 +65,40 @@ const lastDayOfWeek = computed(() => daysOfWeek.find(d => d.id === lastDayId.val
 
 const monthArray = computed(() => Array.from({ length: lastDay.value }, (_, index) => index + 1)) // все числа
 
-const orderedMonth = () => {
+const weeks = () => {
   if (lastDayOfWeek.value) {
     const lastId = lastDayOfWeek.value.id
-    daysOfWeek[lastId].days.push(lastDay.value)
-    monthArray.value.slice(monthArray.value.length - 1, lastId + 1)
+    const lastWeek = monthArray.value.splice(monthArray.value.length - lastId - 1, monthArray.value.length)
+    const orderedWeeks = [lastWeek]
+
+    while (monthArray.value.length >= 7) {
+      let week = monthArray.value.splice(monthArray.value.length - 7, monthArray.value.length)
+      orderedWeeks.unshift(week)
+    }
+
+    const emptyDays = new Array(7 - monthArray.value.length).fill(0)
+    if (emptyDays.length !== 7) {
+      const firstWeek = emptyDays.concat(monthArray.value)
+      orderedWeeks.unshift(firstWeek)
+    }
+    return orderedWeeks
   }
 }
 
-onMounted(() => {
-  return orderedMonth()
-})
+const orderedMonth = () => {
+  daysOfWeek.forEach(d => d.days = [])
+  const orderedWeeks = weeks()
+  for (let week in orderedWeeks) {
+    for (let i = 0; i < orderedWeeks[week].length; i++) {
+      if (orderedWeeks[week][i] === 0) {
+        daysOfWeek[i].days.push('-')
+      } else {
+        daysOfWeek[i].days.push(orderedWeeks[week][i])
+      }
+    }
+  }
+}
+
 
 const yearSelect = (countPast: number, countFuture: number) => {
   const yearsArray = [currentYear.value]
@@ -82,7 +110,7 @@ const yearSelect = (countPast: number, countFuture: number) => {
     year--
     pastYearCounter++
   }
-  year = 2023
+  year = currentYear.value
   while (futureYearCounter !== countFuture) {
     yearsArray.push(year + 1)
     year++
@@ -105,6 +133,11 @@ const nextMonth = function () {
   orderedMonth()
 }
 
+// const change = (date: string) => {
+//   emit('changeDate', date)
+//   isChosen.value = true
+//   console.log('chosen')
+// }
 </script>
 
 <style scoped lang="sass">
@@ -165,5 +198,6 @@ const nextMonth = function () {
         &:hover
           cursor: pointer
           background-color: lightblue
-
+        .chosen
+          background-color: lightblue
 </style>
