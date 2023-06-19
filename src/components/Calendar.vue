@@ -22,10 +22,12 @@
     <table class="picker">
       <tr class="daysColumn"
           v-for="day in daysOfWeek"
-         :key="day"
+          :key="day"
       >{{ day.name }}
-      <td>{{ lastDayName }}</td>
-      <td>{{ lastDayName }}</td>
+        <td v-for="d in day.days"
+            :key="d"
+        >{{ d }}
+        </td>
       </tr>
     </table>
     <button @click="emit('closeCalendar')">OK</button>
@@ -33,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useDataStore } from "../store/DataStore";
 
 const props = defineProps({
@@ -44,22 +46,35 @@ const props = defineProps({
 const emit = defineEmits(['closeCalendar'])
 
 const currentDate = new Date()
-const currentYear = currentDate.getFullYear()
-const selected = ref(currentYear)
+const currentYear = ref(currentDate.getFullYear())
+const selected = currentYear
 
 const month = ref(currentDate.getMonth() + 1)
 const monthName = computed(() => useDataStore().months.find(m => m.id === month.value))
 
-const lastDayName = new Date(currentYear, month.value, 0).getDay()
-
+const lastDay = computed(() => new Date(currentYear.value, month.value, 0).getDate()) // 30 - последнее число месяца
+const lastDayId = computed(() => new Date(currentYear.value, month.value, 0).getDay()) // 5 - последний день недели в месяце
 
 const daysOfWeek = useDataStore().week
+const lastDayOfWeek = computed(() => daysOfWeek.find(d => d.id === lastDayId.value))
 
-const day = ref(currentDate.getDate())
+const monthArray = computed(() => Array.from({ length: lastDay.value }, (_, index) => index + 1)) // все числа
+
+const orderedMonth = () => {
+  if (lastDayOfWeek.value) {
+    const lastId = lastDayOfWeek.value.id
+    daysOfWeek[lastId].days.push(lastDay.value)
+    monthArray.value.slice(monthArray.value.length - 1, lastId + 1)
+  }
+}
+
+onMounted(() => {
+  return orderedMonth()
+})
 
 const yearSelect = (countPast: number, countFuture: number) => {
-  const yearsArray = [currentYear]
-  let year = currentYear
+  const yearsArray = [currentYear.value]
+  let year = currentYear.value
   let pastYearCounter = 0
   let futureYearCounter = 0
   while (pastYearCounter !== countPast) {
@@ -67,7 +82,7 @@ const yearSelect = (countPast: number, countFuture: number) => {
     year--
     pastYearCounter++
   }
-  year = currentYear
+  year = 2023
   while (futureYearCounter !== countFuture) {
     yearsArray.push(year + 1)
     year++
@@ -80,10 +95,14 @@ const years = yearSelect(5, 5)
 
 const previousMonth = function () {
   month.value === 1 ? month.value = 12 : month.value--
+  daysOfWeek.forEach(d => d.days = [])
+  orderedMonth()
 }
 
 const nextMonth = function () {
   month.value === 12 ? month.value = 1 : month.value++
+  daysOfWeek.forEach(d => d.days = [])
+  orderedMonth()
 }
 
 </script>
