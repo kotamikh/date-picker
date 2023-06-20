@@ -116,6 +116,7 @@ const yearSelect = (countPast: number, countFuture: number) => {
     year++
     futureYearCounter++
   }
+  orderedMonth()
   return yearsArray
 }
 

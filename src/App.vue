@@ -11,7 +11,7 @@
       <calendar v-model:show="showModal"
                 @close-calendar="showModal = false"
                 :input = "inputValue"
-                @new-date(date)="changeDate"
+                @new-date="changeDate"
       />
     </div>
   </div>
@@ -36,7 +36,14 @@ const showCalendar = () => {
 }
 
 const changeDate = (date: string) => {
-  console.log(date)
+  const dateArr = date.split('/').map(str => str.trim())
+  for (let el of dateArr) {
+    if (el.length < 2) {
+      let id = dateArr.indexOf(el)
+      dateArr[id] = '0' + el
+    }
+  }
+  date = dateArr.join(' / ')
   inputValue.value = date
 }
 
