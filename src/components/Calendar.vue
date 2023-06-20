@@ -29,7 +29,7 @@
         <td v-for="d in day.days"
             :key="d"
             :class="{ chosen : isChosen }"
-            @click="emit('newDate', `${d} / ${monthName.id} / ${currentYear}`)"
+            @click="newDate(`${d} / ${monthName.id} / ${currentYear}`)"
         >{{ d }}
         </td>
       </tr>
@@ -68,7 +68,10 @@ const monthArray = computed(() => Array.from({ length: lastDay.value }, (_, inde
 const weeks = () => {
   if (lastDayOfWeek.value) {
     const lastId = lastDayOfWeek.value.id
-    const lastWeek = monthArray.value.splice(monthArray.value.length - lastId - 1, monthArray.value.length)
+    const lastWeek: Array<number | '-'> = monthArray.value.splice(monthArray.value.length - lastId - 1, monthArray.value.length)
+    while (lastWeek.length < 7) {
+      lastWeek.push('-')
+    }
     const orderedWeeks = [lastWeek]
 
     while (monthArray.value.length >= 7) {
@@ -88,17 +91,19 @@ const weeks = () => {
 const orderedMonth = () => {
   daysOfWeek.forEach(d => d.days = [])
   const orderedWeeks = weeks()
-  for (let week in orderedWeeks) {
-    for (let i = 0; i < orderedWeeks[week].length; i++) {
-      if (orderedWeeks[week][i] === 0) {
-        daysOfWeek[i].days.push('-')
-      } else {
-        daysOfWeek[i].days.push(orderedWeeks[week][i])
+  if(orderedWeeks) {
+    for (let week of orderedWeeks) {
+      let weekId = orderedWeeks.indexOf(week)
+      for (let i = 0; i < orderedWeeks[weekId].length; i++) {
+        if (orderedWeeks[weekId][i] === 0) {
+          daysOfWeek[i].days.push('-')
+        } else {
+          daysOfWeek[i].days.push(orderedWeeks[weekId][i])
+        }
       }
     }
   }
 }
-
 
 const yearSelect = (countPast: number, countFuture: number) => {
   const yearsArray = [currentYear.value]
@@ -134,11 +139,13 @@ const nextMonth = function () {
   orderedMonth()
 }
 
-// const change = (date: string) => {
-//   emit('changeDate', date)
-//   isChosen.value = true
-//   console.log('chosen')
-// }
+const newDate = (date: string) => {
+  if(!date.includes('-')) {
+    emit('newDate', date)
+    isChosen.value = true
+  }
+}
+
 </script>
 
 <style scoped lang="sass">
