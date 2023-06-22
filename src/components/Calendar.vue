@@ -28,8 +28,8 @@
       >{{ day.name }}
         <td v-for="d in day.days"
             :key="d"
-            :class="{ chosen : isChosen }"
-            @click="newDate(`${d} / ${monthName.id} / ${currentYear}`)"
+            :class="{ chosen : d === isChosen }"
+            @click="newDate(`${d} / ${monthName.id} / ${currentYear}`, d)"
         >{{ d }}
         </td>
       </tr>
@@ -52,7 +52,8 @@ const emit = defineEmits(['closeCalendar', 'newDate'])
 const currentDate = new Date()
 const currentYear = ref(currentDate.getFullYear())
 const selected = currentYear
-const isChosen = ref(false)
+
+const isChosen = ref(currentDate.getDate())
 
 const month = ref(currentDate.getMonth() + 1)
 const monthName = computed(() => useDataStore().months.find(m => m.id === month.value))
@@ -139,10 +140,12 @@ const nextMonth = function () {
   orderedMonth()
 }
 
-const newDate = (date: string) => {
+const newDate = (date: string, d: number | '-') => {
   if(!date.includes('-')) {
     emit('newDate', date)
-    isChosen.value = true
+    if(typeof(d) === "number") {
+      isChosen.value = d
+    }
   }
 }
 
@@ -206,6 +209,8 @@ const newDate = (date: string) => {
         &:hover
           cursor: pointer
           background-color: lightblue
-        .chosen
-          background-color: lightblue
+
+      .chosen
+        background-color: lightblue
+
 </style>
